@@ -114,8 +114,8 @@ void MusicMaker::bindMusicFunctions() {
 }
 
 
-void MusicMaker::loadLuaSetup() {
-	lua.script_file(LUA_SETUP_SCRIPT_PATH);
+void MusicMaker::loadLuaRules() {
+	lua.script_file(LUA_RULES_SCRIPT_PATH);
 }
 
 

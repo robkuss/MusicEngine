@@ -25,6 +25,7 @@ add_executable(MusicMaker
 		src/MusicMaker.cpp
 		src/MelodyMaker.cpp
 		src/MIDI.cpp
+		src/MIDIFileLoading.cpp
 		src/lua/LuaBindings.cpp
 		src/game/GameBridge.cpp
 
@@ -33,9 +34,7 @@ add_executable(MusicMaker
 		libs/midifile/src/MidiEventList.cpp
 		libs/midifile/src/MidiMessage.cpp
 		libs/midifile/src/Binasc.cpp
-
 		libs/rtmidi-6.0.0/RtMidi.cpp
-		src/MIDIFileLoading.cpp
 )
 
 # Add /resources, /input and /lua directories
@@ -51,7 +50,7 @@ add_custom_command(TARGET MusicMaker POST_BUILD
 )
 
 target_compile_definitions(MusicMaker PRIVATE
-		LUA_SETUP_SCRIPT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/lua/setup.lua"
+		LUA_RULES_SCRIPT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/lua/rules.lua"
 		LUA_LOGIC_SCRIPT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/lua/logic.lua"
 )
 

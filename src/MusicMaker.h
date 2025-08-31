@@ -43,7 +43,7 @@ private:
 	// FUNCTIONS
 	// Lua
 	void bindMusicFunctions();
-	void loadLuaSetup();
+	void loadLuaRules();
 	void loadLuaLogic();
 
 	// JSON

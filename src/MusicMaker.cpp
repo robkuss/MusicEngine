@@ -33,7 +33,7 @@ void MusicMaker::start() {
 	bindMusicFunctions();
 
 	// Load setup.lua for input MIDI file and user-defined rules
-	loadLuaSetup();
+	loadLuaRules();
 
 	// Get input training MIDI
 	MidiFile mainMIDIFile = getCachedMIDI(mainMIDIFilePath);
