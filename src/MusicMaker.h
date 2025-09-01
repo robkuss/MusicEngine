@@ -48,7 +48,7 @@ private:
 	void loadLuaFileSafe(const std::string &path, const char *tag);
 	void validateAllRules();
 
-	// JSON
+	// GameState
 	void startGameStateThread();
 	void handleGameState(nlohmann::json& parsed, sol::table& gameState);
 
@@ -72,6 +72,10 @@ private:
 	void play();
 	void pause();
 	void resume();
+
+	// Error handling
+	std::unordered_set<std::string> seenUnknownEnemyTypes;
+	std::unordered_set<std::string> seenUnknownEnvironments;
 
 
 	// VARIABLES

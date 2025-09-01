@@ -42,15 +42,21 @@ void MusicMaker::startGameStateThread() {
 void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) {
     using nlohmann::json;
 
+	sol::table rulesTable = lua["rules"];
+
+	auto exists_in_rules = [&](const string& key) -> bool {
+		if (!rulesTable.valid() || rulesTable.get_type() != sol::type::table)
+			return false;
+		const sol::object v = rulesTable[key];
+		return v.valid() && v.get_type() == sol::type::table;
+	};
+
     auto get_number = [&](const json& j, const char* key, double& out)->bool {
 		const auto it = j.find(key);
-        if (it != j.end() && it->is_number()) { out = it->get<double>(); return true; }
-        return false;
-    };
-
-    auto get_string = [&](const json& j, const char* key, string& out)->bool {
-        const auto it = j.find(key);
-        if (it != j.end() && it->is_string()) { out = it->get<string>(); return true; }
+        if (it != j.end() && it->is_number()) {
+	        out = it->get<double>();
+        	return true;
+        }
         return false;
     };
 
@@ -71,57 +77,59 @@ void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) 
     }
 
     // enemies
-    {
-        sol::table enemies = lua.create_table();
-        size_t written = 0;
+	{
+    	sol::table enemies = lua.create_table();
+    	size_t written = 0;
 
-        if (parsed.contains("enemies")) {
-            const auto& arr = parsed["enemies"];
-            if (!arr.is_array()) {
-                cerr << "[MusicMaker] JSON: enemies not an array -> set empty\n";
-            } else {
-                constexpr size_t kMaxEnemies = 256;
-                for (const auto& enemy : arr) {
-                    if (!enemy.is_object()) continue;
+    	if (parsed.contains("enemies") && parsed["enemies"].is_array()) {
+    		constexpr size_t kMaxEnemies = 256;
+    		for (const auto& enemy : parsed["enemies"]) {
+    			if (!enemy.is_object()) continue;
 
-                    string type;
-                    if (!get_string(enemy, "type", type) || type.empty()) {
-                        cerr << "[MusicMaker] JSON: enemy missing/empty 'type' -> skipped\n";
-                        continue;
-                    }
+    			string type;
+    			if (!enemy.contains("type") || !enemy["type"].is_string())
+    				continue;
+    			type = enemy["type"].get<string>();
+    			if (type.empty()) continue;
+    			
+    			if (!exists_in_rules(type) && !seenUnknownEnemyTypes.contains(type)) {
+    				seenUnknownEnemyTypes.insert(type);
+    				std::cerr << "[MusicMaker] JSON FYI: enemy.type \"" << type << "\" has no matching rule\n";
+    			}
+    			
+    			sol::table e = lua.create_table();
+    			e["type"] = type;
+    			if (enemy.contains("distance") && enemy["distance"].is_number()) {
+    				double d = enemy["distance"].get<double>();
+    				e["distance"] = d < 0.0 ? 0.0 : d;
+    			} else {
+    				e["distance"] = 0.0;
+    			}
 
-                    double dist = 0.0;
-                    if (enemy.contains("distance")) {
-                        if (enemy["distance"].is_number()) {
-                            dist = enemy["distance"].get<double>();
-                            if (dist < 0.0) { dist = 0.0; }
-                        } else {
-                            cerr << "[MusicMaker] JSON: enemy.distance wrong type -> ignored\n";
-                        }
-                    }
-
-                    sol::table e = lua.create_table();
-                    e["type"] = type;
-                    e["distance"] = dist;
-                    enemies[++written] = e;
-
-                    if (written >= kMaxEnemies) {
-                        cerr << "[MusicMaker] JSON: enemies truncated at " << kMaxEnemies << "\n";
-                        break;
-                    }
-                }
-            }
-        }
-        gameState["enemies"] = enemies;
-    }
+    			enemies[++written] = e;
+    			if (written >= kMaxEnemies) {
+    				cerr << "[MusicMaker] JSON: enemies truncated at " << kMaxEnemies << "\n";
+    				break;
+    			}
+    		}
+    	}
+    	gameState["enemies"] = enemies;
+	}
 
     // environment
-    {
-        string env;
-        if (!get_string(parsed, "environment", env)) {
-            cerr << "[MusicMaker] JSON: environment missing/wrong type -> set \"\"\n";
-            env.clear();  // neutral
-        }
-        gameState["environment"] = env;
-    }
+	{
+    	string env;
+    	if (parsed.contains("environment") && parsed["environment"].is_string()) {
+    		env = parsed["environment"].get<string>();
+    	} else {
+    		env.clear();
+    	}
+
+    	if (!env.empty() && !exists_in_rules(env) && !seenUnknownEnvironments.contains(env)) {
+    		seenUnknownEnvironments.insert(env);
+    		std::cerr << "[MusicMaker] JSON FYI: environment \"" << env << "\" has no matching rule\n";
+    	}
+
+    	gameState["environment"] = env;
+	}
 }
