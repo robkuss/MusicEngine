@@ -73,10 +73,6 @@ private:
 	void pause();
 	void resume();
 
-	// Error handling
-	std::unordered_set<std::string> seenUnknownEnemyTypes;
-	std::unordered_set<std::string> seenUnknownEnvironments;
-
 
 	// VARIABLES
 	// Game

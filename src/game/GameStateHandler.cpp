@@ -91,12 +91,7 @@ void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) 
     				continue;
     			type = enemy["type"].get<string>();
     			if (type.empty()) continue;
-    			
-    			if (!exists_in_rules(type) && !seenUnknownEnemyTypes.contains(type)) {
-    				seenUnknownEnemyTypes.insert(type);
-    				std::cerr << "[MusicMaker] JSON FYI: enemy.type \"" << type << "\" has no matching rule\n";
-    			}
-    			
+
     			sol::table e = lua.create_table();
     			e["type"] = type;
     			if (enemy.contains("distance") && enemy["distance"].is_number()) {
@@ -123,11 +118,6 @@ void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) 
     		env = parsed["environment"].get<string>();
     	} else {
     		env.clear();
-    	}
-
-    	if (!env.empty() && !exists_in_rules(env) && !seenUnknownEnvironments.contains(env)) {
-    		seenUnknownEnvironments.insert(env);
-    		std::cerr << "[MusicMaker] JSON FYI: environment \"" << env << "\" has no matching rule\n";
     	}
 
     	gameState["environment"] = env;
