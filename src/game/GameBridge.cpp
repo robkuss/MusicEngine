@@ -111,8 +111,7 @@ bool GameBridge::isClientConnected() const {
 string GameBridge::receiveJsonPayload() {
 	if (!isClientConnected()) return "";
 
-	string buffer;
-	char chunk[1024];
+	char chunk[4096];
 
 	while (true) {
 		fd_set readSet;
@@ -123,34 +122,37 @@ string GameBridge::receiveJsonPayload() {
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 150000;  // Wait 150 ms
 
-		const int selResult = select(static_cast<int>(clientSocket) + 1, &readSet, nullptr, nullptr, &timeout);
-		if (selResult == 0) {}  // Timeout: No data received for 150 ms
-		if (selResult < 0) {
-			cerr << "[GameBridge] select() error" << endl;
-			connected = false;
-		}
-		if (selResult <= 0)
-			return "";
-
-		const int received = recv(clientSocket, chunk, sizeof(chunk) - 1, 0);
-		if (received <= 0) {
-			cout << "[GameBridge] Client disconnected." << endl;
+		const int sel = select(static_cast<int>(clientSocket) + 1, &readSet, nullptr, nullptr, &timeout);
+		if (sel == 0) return "";  // Timeout: No data received for 150 ms
+		if (sel < 0) {
+			cerr << "[GameBridge] select() error.\n";
 			connected = false;
 			return "";
 		}
 
-		chunk[received] = '\0';
-		buffer += chunk;
+		const int rec = recv(clientSocket, chunk, sizeof(chunk) - 1, 0);
+		if (rec <= 0) {
+			cout << "[GameBridge] Client disconnected.\n";
+			connected = false;
+			return "";
+		}
+
+		recvBuffer.append(chunk, rec);
+
+		// Size limit for protection
+		if (recvBuffer.size() > kMaxBuffer) {
+			cerr << "[GameBridge] Dropping oversized buffer > " << kMaxBuffer << " bytes\n";
+			recvBuffer.clear();
+			return "";
+		}
 
 		// Handle newline-delimited JSON
-		const size_t newlinePos = buffer.find('\n');
-		if (newlinePos != string::npos) {
-			string jsonLine = buffer.substr(0, newlinePos);
-			buffer.erase(0, newlinePos + 1);
-
-			if (DEBUG_GB) cout << "[GameBridge] Received JSON: " << jsonLine << endl;
-
-			return jsonLine;
+		const size_t nl = recvBuffer.find('\n');
+		if (nl != string::npos) {
+			string line = recvBuffer.substr(0, nl);
+			recvBuffer.erase(0, nl + 1);
+			if (DEBUG_GB) cout << "[GameBridge] Received JSON: " << line << endl;
+			return line;
 		}
 	}
 }

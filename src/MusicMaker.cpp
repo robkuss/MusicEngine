@@ -97,62 +97,6 @@ void MusicMaker::start() {
 }
 
 
-void MusicMaker::startGameStateThread() {
-	thread([this] {
-		while (!stopReceiver.load() && gb.isClientConnected()) {
-			string payload = gb.receiveJsonPayload();
-			if (payload.empty()) {
-				if (gb.isClientConnected()) {
-					// Client still connected -> Game paused
-					pause();
-				}
-				continue;
-			}
-
-			if (isPaused) {
-				isPaused = false;
-				resume();
-			}
-
-			try {
-				nlohmann::json parsed = nlohmann::json::parse(payload);
-
-				// Convert to Lua table
-				sol::table gameState = lua.create_table();
-
-				handleGameState(parsed, gameState);
-
-				// Call on_update
-				onUpdate(gameState);
-
-			} catch (const exception& e) {
-				cerr << "[MusicMaker] JSON parse error: " << e.what() << endl;
-			}
-		}
-	}).detach();
-}
-
-void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) {
-	if (parsed.contains("playerHealth"))
-		gameState["playerHealth"] = parsed["playerHealth"].get<double>();
-
-	if (parsed.contains("enemies") && parsed["enemies"].is_array()) {
-		sol::table enemies = lua.create_table();
-		int i = 1;
-		for (const auto& enemy : parsed["enemies"]) {
-			sol::table enemyTable = lua.create_table();
-			if (enemy.contains("type"))
-				enemyTable["type"] = enemy["type"].get<string>();
-			enemies[i++] = enemyTable;
-		}
-		gameState["enemies"] = enemies;
-	}
-
-	if (parsed.contains("environment"))
-		gameState["environment"] = parsed["environment"].get<string>();
-}
-
-
 void MusicMaker::play() {
 	mode = Mode::PLAY;
 

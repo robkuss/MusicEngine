@@ -27,5 +27,8 @@ private:
 	uintptr_t listenSocket = 0;
 	uintptr_t clientSocket = 0;
 
+	std::string recvBuffer;								// persistent buffer for line framing
+	static constexpr size_t kMaxBuffer = 256 * 1024;	// 256 KB protection
+
 	bool setupSocket();
 };
