@@ -42,15 +42,6 @@ void MusicMaker::startGameStateThread() {
 void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) {
     using nlohmann::json;
 
-	sol::table rulesTable = lua["rules"];
-
-	auto exists_in_rules = [&](const string& key) -> bool {
-		if (!rulesTable.valid() || rulesTable.get_type() != sol::type::table)
-			return false;
-		const sol::object v = rulesTable[key];
-		return v.valid() && v.get_type() == sol::type::table;
-	};
-
     auto get_number = [&](const json& j, const char* key, double& out)->bool {
 		const auto it = j.find(key);
         if (it != j.end() && it->is_number()) {
