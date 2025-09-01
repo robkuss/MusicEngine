@@ -3,26 +3,28 @@
 -- Called once at the start of the execution
 function on_start()
     -- Preload all MIDI files defined in rules
-    for trigger, rule in pairs(rules) do
-        if rule.theme then
-            if rule.instrument then
+    local preloaded = {}
+    for _, rule in pairs(rules) do
+        if rule.theme and rule.instrument then
+            if not preloaded[rule.theme] then
                 music.preload_midi(rule.theme)
-            else
-                print("[logic.lua] Warning: No instrument defined for MIDI theme '" .. rule.theme .. "' for trigger '" .. trigger .. "'. Skipping MIDI rule.")
+                preloaded[rule.theme] = true
             end
         end
     end
 end
-
 
 -- Track which trigger types were active in the previous update
 local previous_triggers = {}
 
 -- Called every game update
 function on_update(game_state)
-    if not game_state then return end
-    if not game_state.playerHealth or not game_state.enemies or not game_state.environment then return end
-
+    if not game_state
+    or not game_state.playerHealth
+    or not game_state.enemies
+    or not game_state.environment then
+        return
+    end
 
     -- Build a set of current trigger types
     local current_triggers = {}
@@ -53,8 +55,6 @@ function on_update(game_state)
             local rule = rules[trigger_type]
             if rule and rule.theme and rule.instrument then
                 music.add_midi(rule.theme, rule.instrument)
-            elseif rule and rule.theme and not rule.instrument then
-                print("[logic.lua] Warning: No instrument defined for MIDI theme '" .. rule.theme .. "' for trigger '" .. trigger_type .. "'")
             end
         end
     end
@@ -64,7 +64,9 @@ function on_update(game_state)
     apply_effects(game_state)
 
 
-    -- Update previous state
+    -- Update previous state (shallow copy to avoid aliasing)
+    local tmp = {}
+    for k, v in pairs(current_triggers) do tmp[k] = v end
     previous_triggers = current_triggers
 end
 
@@ -117,12 +119,8 @@ function apply_effects(game_state)
 
     -- Adjust intensity based on player health
     local intensity = 1.0 - player_health
+    local total_intensity = (final_fx.intensity or 0.0) + intensity
+    if total_intensity < 0.0 then total_intensity = 0.0 end
+    if total_intensity > 1.0 then total_intensity = 1.0 end
     music.set_intensity(final_fx.intensity + intensity)
-end
-
-
-function print_rule(rule)
-    for k, v in pairs(rule) do
-        print("  " .. k .. " = " .. tostring(v))
-    end
 end

@@ -45,6 +45,8 @@ private:
 	void bindMusicFunctions();
 	void loadLuaRules();
 	void loadLuaLogic();
+	void loadLuaFileSafe(const std::string &path, const char *tag);
+	void validateAllRules();
 
 	// JSON
 	void startGameStateThread();

@@ -1,17 +1,18 @@
 #include "MusicMaker.h"
+#include "LuaRuleValidation.h"
 
 using namespace std;
-
+using namespace sol;
 
 void MusicMaker::bindMusicFunctions() {
 	lua.open_libraries(
-		sol::lib::base,
-		sol::lib::math,
-		sol::lib::table
+		lib::base,
+		lib::math,
+		lib::table
 	);
 
-	// Expose `music` table to Lua
-	sol::table musicTable = lua.create_named_table("music");
+	// Expose "music" table to Lua
+	table musicTable = lua.create_named_table("music");
 
 
 	// MIDI
@@ -43,7 +44,7 @@ void MusicMaker::bindMusicFunctions() {
 	// add_midi
 	musicTable.set_function("add_midi", [this](const string& path, const int program) {
 		activateMIDITheme(path, program);
-		cout << "[Lua] Activated MIDI theme \"" << path << "\" with instrument " << program << endl;
+		cout << "[Lua] Activated MIDI theme \"" << path << "\" with instrument " << program << "\n";
 	});
 
 	// remove_midi
@@ -74,9 +75,10 @@ void MusicMaker::bindMusicFunctions() {
 	musicTable.set_function("set_tempo_multiplier", [this](const double factor) {
 		if (factor == musicState.tempoMultiplier) return;
 		musicState.tempoMultiplier = factor;
-		cout << "[Lua] Set tempo multiplier to " << factor << endl;
+		cout << "[Lua] Set tempo multiplier to " << factor << "\n";
 	});
 
+	// set_lead_style
 	musicTable.set_function("set_lead_style", [this](const string& style) {
 		if (style == musicState.leadStyle) return;
 		musicState.leadStyle = style;
@@ -84,17 +86,17 @@ void MusicMaker::bindMusicFunctions() {
 	});
 
 	// set_lead_layers
-	musicTable.set_function("set_lead_layers", [this](const int octaves) {
-		if (octaves == musicState.leadLayers) return;
-		musicState.leadLayers = octaves;
-		cout << "[Lua] Set lead layers to " << octaves << endl;
+	musicTable.set_function("set_lead_layers", [this](const int n) {
+		if (n == musicState.leadLayers) return;
+		musicState.leadLayers = n;
+		cout << "[Lua] Set lead layers to " << n << "\n";
 	});
 
 	// set_chord_layers
-	musicTable.set_function("set_chord_layers", [this](const int octaves) {
-		if (octaves == musicState.chordLayers) return;
-		musicState.chordLayers = octaves;
-		cout << "[Lua] Set chord layers to " << octaves << endl;
+	musicTable.set_function("set_chord_layers", [this](const int n) {
+		if (n == musicState.chordLayers) return;
+		musicState.chordLayers = n;
+		cout << "[Lua] Set chord layers to " << n << "\n";
 	});
 
 	// set_bass_style
@@ -114,19 +116,46 @@ void MusicMaker::bindMusicFunctions() {
 }
 
 
-void MusicMaker::loadLuaRules() {
-	lua.script_file(LUA_RULES_SCRIPT_PATH);
+void MusicMaker::loadLuaFileSafe(const string& path, const char* tag) {
+	const auto result = lua.safe_script_file(path, &script_pass_on_error);
+	if (!result.valid()) {
+		const error err = result;
+		cerr << "[" << tag << "] Lua load error in \"" << path << "\": "
+			 << err.what() << "\n";
+		throw runtime_error("Lua load failed");
+	}
 }
 
+void MusicMaker::loadLuaRules() {
+	loadLuaFileSafe(LUA_RULES_SCRIPT_PATH,  "rules.lua");
+}
 
 void MusicMaker::loadLuaLogic() {
-	lua.script_file(LUA_LOGIC_SCRIPT_PATH);
+	loadLuaFileSafe(LUA_LOGIC_SCRIPT_PATH,  "logic.lua");
 
-	onStart   = lua["on_start"];
-	onUpdate  = lua["on_update"];
+	onStart  = lua["on_start"];
+	onUpdate = lua["on_update"];
 
-	if (!onStart)
-		cerr << "[Lua] Warning: Required Lua on_start function missing or invalid\n";
-	if (!onUpdate)
-		cerr << "[Lua] Warning: Required Lua on_update function missing or invalid\n";
+	if (!onStart)  cerr << "[Lua] Warning: Required Lua on_start function missing or invalid\n";
+	if (!onUpdate) cerr << "[Lua] Warning: Required Lua on_update function missing or invalid\n";
+}
+
+void MusicMaker::validateAllRules() {
+	const table luaRules = lua["rules"];
+	if (!luaRules.valid() || luaRules.get_type() != type::table) {
+		cerr << "[Lua] No valid global 'rules' table\n";
+		return;
+	}
+
+	luaRules.for_each([&](const object &key, const object &value) {
+		if (key.get_type() != type::string || value.get_type() != type::table) {
+			cerr << "[Lua] Skipping malformed rule entry\n";
+			return;
+		}
+
+		const auto trigger = key.as<string>();
+		auto cfg = value.as<table>();  // not const, since it can be rewritten if errors are detected in the rules
+
+		parseAndValidateRule(trigger, cfg);
+	});
 }

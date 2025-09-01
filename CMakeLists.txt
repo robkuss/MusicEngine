@@ -35,6 +35,8 @@ add_executable(MusicMaker
 		libs/midifile/src/MidiMessage.cpp
 		libs/midifile/src/Binasc.cpp
 		libs/rtmidi-6.0.0/RtMidi.cpp
+		src/lua/ValidLiterals.h
+		src/lua/LuaRuleValidation.h
 )
 
 # Add /resources, /input and /lua directories

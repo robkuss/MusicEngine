@@ -12,7 +12,7 @@ using namespace smf;
 constexpr bool INIT_DEBUG = false;
 constexpr bool DEBUG_JSON = false;
 
-constexpr bool OFFLINE_MODE = true;	 // Doesn't require connection to a game to generate music
+constexpr bool OFFLINE_MODE = false;	 // Doesn't require connection to a game to generate music
 
 
 int main() {
@@ -34,6 +34,7 @@ void MusicMaker::start() {
 
 	// Load setup.lua for input MIDI file and user-defined rules
 	loadLuaRules();
+	validateAllRules();
 
 	// Get input training MIDI
 	MidiFile mainMIDIFile = getCachedMIDI(mainMIDIFilePath);

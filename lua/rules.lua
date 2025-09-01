@@ -1,11 +1,11 @@
--- setup.lua
+-- rules.lua
 
 -- Config (set before training)
-local main_midi = "mozart.mid"
+local main_midi = "sus.mid"
 music.preload_midi(main_midi)
 music.set_main_midi(main_midi)
 music.use_auto_markov(false)
-music.set_markov_order(2)
+music.set_markov_order(3)
 
 
 -- Rules setup
@@ -19,12 +19,16 @@ music.set_markov_order(2)
     - lead_layers       (>= 1)
     - chord_layers      (>= 1)
     - bass_style        ("Sustain", "Pulse", "Fast")
-    - drum_pattern      ("None", "Calm", "Stealth", "Tension", "Combat", "Boss")
+    - drum_pattern      ("None", "Calm", "Stealth", "Tense", "Combat", "Boss")
 ]]
 rules = {}
 
 -- Add a rule for a trigger (enemy or environment)
 function add_rule(trigger, config)
+    if rules[trigger] ~= nil then
+        print("[Lua] Error: rule for trigger '" .. trigger .. "' is already defined -> ignored")
+        return
+    end
     rules[trigger] = config
 end
 
@@ -32,6 +36,7 @@ end
 -- Example rule definitions
 
 -- Enemy rules
+
 add_rule("zombie", {
     theme = "zombie.mid",
     instrument = 11,  -- Vibraphone
@@ -39,11 +44,11 @@ add_rule("zombie", {
     bass_style = "Pulse"
 })
 
---[[add_rule("skeleton", {
+add_rule("skeleton", {
     theme = "skeleton.mid",
     instrument = 13,  -- Xylophone
     bass_style = "Pulse"
-})]]
+})
 
 add_rule("wither", {
     theme = "skeleton.mid",
