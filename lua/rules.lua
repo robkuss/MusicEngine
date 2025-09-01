@@ -11,13 +11,13 @@ music.set_markov_order(3)
 -- Rules setup
 --[[ Rules can be:
     - theme             (connects a MIDI theme to a trigger)
-    - instrument        (connects that MIDI theme to a MIDI instrument)
-    - intensity         (0.0 - 1.0, experimental)
+    - instrument        (connects that MIDI theme to a MIDI instrument, 0..127)
+    - intensity         (0..1)
     - scale             (any diatonic mode, e.g. "Dorian" or "Lydian")
-    - tempo_multiplier  (experimental)
+    - tempo_multiplier  (>=0)
     - lead_style        ("Sustain" or "Pulse")
-    - lead_layers       (>= 1)
-    - chord_layers      (>= 1)
+    - lead_layers       (>=1)
+    - chord_layers      (>=1)
     - bass_style        ("Sustain", "Pulse", "Fast")
     - drum_pattern      ("None", "Calm", "Stealth", "Tense", "Combat", "Boss")
 ]]
@@ -33,10 +33,9 @@ function add_rule(trigger, config)
 end
 
 
--- Example rule definitions
+-- Rule definitions
 
 -- Enemy rules
-
 add_rule("zombie", {
     theme = "zombie.mid",
     instrument = 11,  -- Vibraphone
