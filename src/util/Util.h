@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 
 // MACROS
@@ -135,3 +136,23 @@ static void processMidiEvents(smf::MidiFile& midiFile, const TimeSignatureInfo t
 		}
 	}
 }
+
+// Scan "input" folder for MIDI files
+inline std::vector<std::string> scanMidiFiles() {
+	std::vector<std::string> files;
+	namespace fs = std::filesystem;
+	try {
+		for (const auto& entry : fs::directory_iterator("input")) {
+			if (!entry.is_regular_file()) continue;
+			auto path = entry.path();
+			auto ext = path.extension().string();
+			if (ext == ".mid" || ext == ".midi") {
+				files.push_back(path.filename().string());
+			}
+		}
+	} catch (const std::exception& e) {
+		std::cerr << "[scanMidiFiles] " << e.what() << "\n";
+	}
+	return files;
+}
+

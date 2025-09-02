@@ -3,6 +3,7 @@
 #include <cfloat>
 
 #include "util/Debug.h"
+#include "gui/GUI.h"
 
 using namespace std;
 using namespace smf;
@@ -15,6 +16,7 @@ constexpr bool OFFLINE_MODE = false;  // Doesn't require connection to a game to
 
 
 int main() {
+	GUI("Music Engine", 1500, 950).start();
 	MusicMaker().start();
 }
 
