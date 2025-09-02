@@ -38,6 +38,7 @@ public:
 	MusicMaker() = default;
 
 	void start();
+	// void startPT(const std::string &file);  // For performance testing
 
 private:
 	// FUNCTIONS
@@ -62,17 +63,15 @@ private:
 	// Events
 	std::shared_ptr<ScheduledEvent> pollNextEventWithTiming(double melodyTime);
 
-	void scheduleNote(Note note, Clock::time_point startTime, double duration, ActiveInstrument instrument);
-	void scheduleMelody(const std::vector<std::shared_ptr<ScheduledEvent>> &schedule);
-	void scheduleBass(const Chord& nextChord, Clock::time_point mstAbs);
-	void scheduleDrums(Clock::time_point mstAbs);
-
-	void playChordTransition(const Chord &lastChord, const Chord &nextChord);
-
 	void play();
 	void pause();
 	void resume();
 
+	void scheduleNote(Note note, Clock::time_point startTime, double duration, ActiveInstrument instrument);
+	void scheduleMelody(const std::vector<std::shared_ptr<ScheduledEvent>> &schedule);
+	void scheduleBass(const Chord& nextChord, Clock::time_point mstAbs);
+	void scheduleDrums(Clock::time_point mstAbs);
+	void playChordTransition(const Chord &lastChord, const Chord &nextChord);
 
 	// VARIABLES
 	// Game

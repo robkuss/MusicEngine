@@ -107,6 +107,10 @@ inline Clock::time_point doubleToTimePoint(const double val) {
 	return Clock::time_point(doubleToMs(val));
 }
 
+inline long long timeBetween(const Clock::time_point t0, const Clock::time_point t1) {
+	return std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+}
+
 
 template<typename EventHandler>
 static void processMidiEvents(smf::MidiFile& midiFile, const TimeSignatureInfo tsInfo, EventHandler handleEvent) {

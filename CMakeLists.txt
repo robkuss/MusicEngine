@@ -30,11 +30,14 @@ add_executable(MusicMaker
 		src/game/GameBridge.cpp
 		src/game/GameStateHandler.cpp
 
+		test/PerformanceTesting.cpp
+
 		libs/midifile/src/MidiFile.cpp
 		libs/midifile/src/MidiEvent.cpp
 		libs/midifile/src/MidiEventList.cpp
 		libs/midifile/src/MidiMessage.cpp
 		libs/midifile/src/Binasc.cpp
+		test/TestCSV.h
 )
 
 # Add /resources, /input and /lua directories
@@ -48,6 +51,11 @@ add_custom_command(TARGET MusicMaker POST_BUILD
 		${CMAKE_CURRENT_SOURCE_DIR}/input
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input
 )
+#[[add_custom_command(TARGET MusicMaker POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		${CMAKE_CURRENT_SOURCE_DIR}/lua
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lua
+)]]
 
 target_compile_definitions(MusicMaker PRIVATE
 		LUA_RULES_SCRIPT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/lua/rules.lua"

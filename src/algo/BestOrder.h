@@ -123,7 +123,9 @@ inline int determineBestOrder(const Melody& melody, const Mode mode) {
 
 	// Accept or override the suggested order
     cout << "Suggested Markov chain order: " << bestOrder << endl;
-	cout << "Press ENTER to accept or choose a different order: ";
+
+	// Optionally let the user decide if they want to keep the suggested order or override it
+	/*cout << "Press ENTER to accept or choose a different order: ";
 	if (mode == Mode::IDLE && cin.peek() == '\n') cin.ignore();
 	string userInput;
 	getline(cin, userInput);
@@ -136,6 +138,7 @@ inline int determineBestOrder(const Melody& melody, const Mode mode) {
 		} catch (...) {
 			cout << "Invalid input. Using suggested order: " << bestOrder << endl;
 		}
-	}
+	}*/
+
     return bestOrder;
 }

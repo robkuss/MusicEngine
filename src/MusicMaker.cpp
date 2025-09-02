@@ -1,7 +1,6 @@
 #include "MusicMaker.h"
 
 #include <cfloat>
-#include <conio.h>
 
 #include "util/Debug.h"
 
@@ -12,7 +11,7 @@ using namespace smf;
 constexpr bool INIT_DEBUG = false;
 constexpr bool DEBUG_JSON = false;
 
-constexpr bool OFFLINE_MODE = false;	 // Doesn't require connection to a game to generate music
+constexpr bool OFFLINE_MODE = false;  // Doesn't require connection to a game to generate music
 
 
 int main() {
@@ -47,7 +46,11 @@ void MusicMaker::start() {
 	drumPatterns = getDrumPatterns(tsInfo);
 
 	// Extract melody
-	processMidiEvents(mainMIDIFile, tsInfo, [&](const Note note, const Clock::time_point eventStartTime, const double duration) {
+	processMidiEvents(mainMIDIFile, tsInfo, [&](
+		const Note note,
+		const Clock::time_point eventStartTime,
+		const double duration
+	) {
 		const auto event = make_shared<FixedEvent>(
 			note,
 			getMTP(playStartTime, eventStartTime, tsInfo),
@@ -87,7 +90,7 @@ void MusicMaker::start() {
 	if constexpr (!OFFLINE_MODE) {
 		// Start the socket server
 		gb.startGameStateListener();
-		gb.waitForConnection();  // Block until client connects
+		gb.waitForConnection();
 
 		startGameStateThread();
 	}
@@ -121,7 +124,10 @@ void MusicMaker::play() {
 				break;
 			}
 
-			if (isPaused) continue;
+			if (isPaused) {
+				this_thread::sleep_for(chrono::milliseconds(10));
+				continue;
+			}
 		}
 
 		// --- SETUP ---

@@ -5,7 +5,7 @@ local main_midi = "sus.mid"
 music.preload_midi(main_midi)
 music.set_main_midi(main_midi)
 music.use_auto_markov(false)
-music.set_markov_order(3)
+music.set_markov_order(10)
 
 
 -- Rules setup
