@@ -75,6 +75,7 @@ add_executable(MusicEngine
 		libs/midifile/src/MidiMessage.cpp
 		libs/midifile/src/Binasc.cpp
 		src/gui/GUIMusicGen.cpp
+		src/gui/GUILogger.h
 )
 
 

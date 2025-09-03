@@ -14,6 +14,9 @@ constexpr bool OFFLINE_MODE = false;  // Doesn't require connection to a game to
 
 
 void MusicMaker::start() {
+	isRunning.store(true, memory_order_release);
+	stopRequested.store(false, memory_order_relaxed);
+
 	// Load MIDI soundfont
 	midi.loadSoundfont("soundfonts/FluidR3_GM.sf2");
 
@@ -91,6 +94,9 @@ void MusicMaker::start() {
 
 	// Start generating music
 	play();
+
+	midi.stopAll();  // ensure silence on exit
+	isRunning.store(false, memory_order_release);
 }
 
 
@@ -111,13 +117,19 @@ void MusicMaker::play() {
 
 	// Generate music measure by measure
 	while (true) {
+		// Cooperative stop
+		if (stopRequested.load(memory_order_relaxed)) {
+			cout << "[MusicMaker] Stop requested. Exiting play loop...\n";
+			midi.stopAll();
+			break;
+		}
+
 		if constexpr (!OFFLINE_MODE) {
 			if (!gb.isClientConnected()) {
 				cout << "[MusicMaker] Stopping music...\n";
 				midi.stopAll();
 				break;
 			}
-
 			if (isPaused) {
 				this_thread::sleep_for(chrono::milliseconds(10));
 				continue;

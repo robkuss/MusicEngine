@@ -50,7 +50,7 @@ GUI::GUI(
 	const string &title,
 	const int width,
 	const int height
-) : width(width), height(height), title(title), selectedGame() {
+) : title(title), width(width), height(height), selectedGame() {
 	windowWidth = width;
 	windowHeight = height;
 
@@ -74,17 +74,17 @@ void GUI::start() {
 
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* win = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
-	if (!win) {
+	window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
+	if (!window) {
 		cerr << "Window creation failed\n";
 		glfwTerminate();
 		return;
 	}
 
-	glfwMakeContextCurrent(win);
+	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);  // VSync
 
-	glfwSetWindowSizeCallback(win, windowSizeCallback);
+	glfwSetWindowSizeCallback(window, windowSizeCallback);
 
 	if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
 		cerr << "Failed to initialize GLAD\n";
@@ -101,11 +101,19 @@ void GUI::start() {
 	ImGui::StyleColorsDark();
 
 	// Bind backend
-	ImGui_ImplGlfw_InitForOpenGL(win, true);
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");  // Shader version
 
 
-	while (!glfwWindowShouldClose(win)) {
+	// Redirect cout / cerr to GUI log
+	coutRedirect = make_unique<GuiLogStreamBuf>(guiLog, "out");
+	oldCoutBuf = cout.rdbuf(coutRedirect.get());
+
+	cerrRedirect = make_unique<GuiLogStreamBuf>(guiLog, "err");
+	oldCerrBuf = cerr.rdbuf(cerrRedirect.get());
+
+
+	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 
 		// Begin ImGui Frame
@@ -114,7 +122,7 @@ void GUI::start() {
 		ImGui::NewFrame();
 
 		int display_w, display_h;
-		glfwGetFramebufferSize(win, &display_w, &display_h);
+		glfwGetFramebufferSize(window, &display_w, &display_h);
 
 		ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
 		ImGui::SetNextWindowSize(ImVec2(static_cast<float>(windowWidth), static_cast<float>(windowHeight)), ImGuiCond_Always);
@@ -146,7 +154,7 @@ void GUI::start() {
 		// Prepare render
 		ImGui::Render();
 		int fb_w, fb_h;
-		glfwGetFramebufferSize(win, &fb_w, &fb_h);
+		glfwGetFramebufferSize(window, &fb_w, &fb_h);
 		glViewport(0, 0, fb_w, fb_h);
 		glClearColor(0.f, 0.f, 0.f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -154,21 +162,37 @@ void GUI::start() {
 		// Render ImGui DrawData
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-		glfwSwapBuffers(win);
+		glfwSwapBuffers(window);
 	}
 
 	// Cleanup
+	stopMusicIfRunning();
+
+	// Restore original stream buffers
+	if (oldCoutBuf) cout.rdbuf(oldCoutBuf), oldCoutBuf = nullptr;
+	if (oldCerrBuf) cerr.rdbuf(oldCerrBuf), oldCerrBuf = nullptr;
+
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
-	glfwDestroyWindow(win);
+	glfwDestroyWindow(window);
+	window = nullptr;
 	glfwTerminate();
 }
 
 
+void GUI::stopMusicIfRunning() {
+	if (musicRunning.load(memory_order_acquire)) {
+		if (music) music->requestStop();
+		if (musicThread.joinable()) musicThread.join();
+		music.reset();
+		musicRunning.store(false, memory_order_release);
+		musicPaused.store(false, memory_order_release);
+	}
+}
 
-void GUI::exportLua(const std::string& path) {
+void GUI::exportLua(const string& path) {
     try {
         filesystem::path p(path);
         if (p.has_parent_path()) create_directories(p.parent_path());
@@ -222,7 +246,7 @@ void GUI::exportLua(const std::string& path) {
             if (r.intensity)    fields.push_back("intensity = "	 + to_string(*r.intensity));
             if (r.scale)        fields.push_back("scale = "		 + luaQuote(*r.scale));
             if (r.tempo_multiplier) {
-                ostringstream f; f << std::setprecision(6) << *r.tempo_multiplier;
+                ostringstream f; f << setprecision(6) << *r.tempo_multiplier;
                 fields.push_back("tempo_multiplier = " + f.str());
             }
             if (r.lead_style)   fields.push_back("lead_style = "   + luaQuote(*r.lead_style));
@@ -245,7 +269,7 @@ void GUI::exportLua(const std::string& path) {
         ofstream f(path, ios::binary);
         if (!f) return;
         f << ss.str();
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         cerr << "Export error: " << e.what() << "\n";
     }
 }

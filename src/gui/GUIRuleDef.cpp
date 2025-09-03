@@ -180,7 +180,7 @@ void GUI::ruleDef() {
     			const bool selected = selectedRuleIdx == i;
 
     			// Label like: "[Mob] Creeper"
-    			string label = "[" + std::string(ToString(k.type)) + "] " + uncanonicalize(k.name);
+    			string label = "[" + string(ToString(k.type)) + "] " + uncanonicalize(k.name);
 
     			ImVec2 fullRow(ImGui::GetContentRegionAvail().x, 0);
     			if (ImGui::Selectable(label.c_str(), selected, 0, fullRow)) {
@@ -550,15 +550,34 @@ void GUI::ruleDef() {
 	ImVec2 btnSize(240.0f, 48.0f);
 	float cursorX = (availW - btnSize.x) * 0.5f;
 	if (cursorX > 0) ImGui::SetCursorPosX(ImGui::GetCursorPosX() + cursorX);
+
 	if (ImGui::Button("Start Music!", btnSize)) {
+		// Persist current settings so MusicMaker can read them
+		exportLua(outPath);
+
+		// Make sure any previous run is shut down
+		stopMusicIfRunning();
+
+		// Start fresh MusicMaker in the background
+		music = make_unique<MusicMaker>();
+		musicRunning.store(true, memory_order_release);
+		musicPaused.store(false, memory_order_release);
+
+		musicThread = thread([this]{
+			music->start();                  // blocking in this worker thread
+			musicRunning.store(false, memory_order_release);
+			musicPaused.store(false, memory_order_release);
+		});
+
+		// Go to MusicGen screen
 		guiState = GUIState::MusicGen;
 	}
 
 	if (!canStart) {
 		ImGui::EndDisabled();
-		if (!hasMainMelody) ImGui::TextColored(ImVec4(1, 0.6f, 0, 1), "Select a main melody source.");
-		if (!hasAnyRule)    ImGui::TextColored(ImVec4(1, 0.6f, 0, 1), "Add at least one rule.");
-		if (!allThemesValid)ImGui::TextColored(ImVec4(1, 0.6f, 0, 1), "Fix theme parameters: missing MIDI or invalid instrument (0–127).");
+		if (!hasMainMelody)  ImGui::TextColored(ImVec4(1, 0.6f, 0, 1), "Select a main melody source.");
+		if (!hasAnyRule)     ImGui::TextColored(ImVec4(1, 0.6f, 0, 1), "Add at least one rule.");
+		if (!allThemesValid) ImGui::TextColored(ImVec4(1, 0.6f, 0, 1), "Fix theme parameters: missing MIDI or invalid instrument (0–127).");
 	}
 
 	// Restore previous style
