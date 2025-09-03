@@ -42,9 +42,8 @@ void GUI::ruleDef() {
 		}
 		if (mainMidiIdx < 0) mainMidiIdx = 0;
 
-		if (ImGui::Combo("##MainMelody", &mainMidiIdx, items.data(), static_cast<int>(items.size())))
-			selectedMidi = midiFiles[mainMidiIdx];
-		else selectedMidi = midiFiles[mainMidiIdx];
+		ImGui::Combo("##MainMelody", &mainMidiIdx, items.data(), static_cast<int>(items.size()));
+		selectedMidi = midiFiles[mainMidiIdx];
 	} else {
 		ImGui::TextDisabled("No MIDI files found");
 	}
@@ -157,7 +156,7 @@ void GUI::ruleDef() {
 	    ImGui::EndPopup();
 	}
 
-	sort(ruleOrder.begin(), ruleOrder.end(),
+	ranges::sort(ruleOrder,
 	[](const TriggerKey& a, const TriggerKey& b){
 		if (a.type != b.type)
 			return static_cast<int>(a.type) < static_cast<int>(b.type);
@@ -338,7 +337,7 @@ void GUI::ruleDef() {
 	        if (scale) {
 	            // Build a sorted list for stable order
 	            vector list(kScales.begin(), kScales.end());
-	            sort(list.begin(), list.end());
+	            ranges::sort(list);
 	            int idx = 0;
 	            for (int i = 0; i < static_cast<int>(list.size()); ++i) {
 		            if (list[i] == *scale) {
@@ -378,7 +377,7 @@ void GUI::ruleDef() {
 	        // lead_style
 	        if (lead_style) {
 	            vector list(kLeadStyles.begin(), kLeadStyles.end());
-	            sort(list.begin(), list.end());
+	            ranges::sort(list);
 	            int idx = 0;
 	        	for (int i = 0; i < static_cast<int>(list.size()); ++i) {
 	        		if (list[i] == *lead_style) {
@@ -431,7 +430,7 @@ void GUI::ruleDef() {
 	        // bass_style
 	        if (bass_style) {
 	            vector list(kBassStyles.begin(), kBassStyles.end());
-	            sort(list.begin(), list.end());
+	            ranges::sort(list);
 	            int idx = 0;
 	        	for (int i = 0; i < static_cast<int>(list.size()); ++i) {
 	        		if (list[i] == *bass_style) {
@@ -455,7 +454,7 @@ void GUI::ruleDef() {
 	        // drum_pattern
 	        if (drum_pattern) {
 	            vector list(kDrumPatterns.begin(), kDrumPatterns.end());
-	            sort(list.begin(), list.end());
+	            ranges::sort(list);
 	            int idx = 0;
 	        	for (int i = 0; i < static_cast<int>(list.size()); ++i) {
 	        		if (list[i] == *drum_pattern) {

@@ -232,7 +232,7 @@ bool GUI::loadRulesFromLua(const string& path, string& outMessage) {
     			r.themeIdx = idx;
     		}
 
-    		std::string trigCanon = canonicalize(trigger);
+    		string trigCanon = canonicalize(trigger);
 
     		auto type = TriggerType::Mob;  // default
     		if (ranges::find(selectedGame.envList, trigCanon) != selectedGame.envList.end()) {
@@ -259,7 +259,7 @@ bool GUI::loadRulesFromLua(const string& path, string& outMessage) {
 }
 
 string GUI::findRulesLua() const {
-	if (fs::exists(outPath)) return string(outPath);
+	if (fs::exists(outPath)) return outPath;
 
 	const char* candidates[] = {
 		RUNTIME_OUTPUT_DIR "/lua/rules.lua",
@@ -268,7 +268,7 @@ string GUI::findRulesLua() const {
 	};
 	for (auto* c : candidates) {
 		try {
-			if (fs::exists(c)) return string(c);
+			if (fs::exists(c)) return c;
 		} catch (...) {}
 	}
 

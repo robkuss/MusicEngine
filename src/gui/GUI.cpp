@@ -220,7 +220,7 @@ void GUI::exportLua(const string& path) {
     	}
 
     	// Sort: first by kind (Mob < Environment < Tag), then by name
-    	sort(keys.begin(), keys.end(),
+    	ranges::sort(keys,
 			[](const TriggerKey& a, const TriggerKey& b) {
 				if (a.type != b.type)
 					return static_cast<int>(a.type) < static_cast<int>(b.type);
