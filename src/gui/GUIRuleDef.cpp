@@ -1,7 +1,6 @@
-#include <ranges>
-
-
 #include "GUI.h"
+
+#include <ranges>
 
 #include "imgui.h"
 

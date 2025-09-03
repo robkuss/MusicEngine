@@ -18,23 +18,23 @@ public:
 	void pushLine(const std::string &line) {
 		using namespace std::chrono;
 
-		// Timestamp prefix [HH:MM:SS.mmm]
-		const auto now   = system_clock::now();
-		const auto ms    = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
-		std::time_t t    = system_clock::to_time_t(now);
+		const auto now = system_clock::now();
+		const auto ms = duration_cast<milliseconds>(now.time_since_epoch()) % 1000;
+		std::time_t t = system_clock::to_time_t(now);
 		std::tm tm{};
 
-		#if defined(_WIN32)
-				localtime_s(&tm, &t);
+		#ifdef _WIN32
+			localtime_s(&tm, &t);
 		#else
-				localtime_r(&t, &tm);
+			localtime_r(&t, &tm);
 		#endif
 
 		std::ostringstream oss;
-		oss << '[' << std::setfill('0') << std::setw(2) << tm.tm_hour << ':'
-					<< std::setw(2) << tm.tm_min  << ':'
-					<< std::setw(2) << tm.tm_sec  << '.'
-					<< std::setw(3) << ms.count() << "] "
+		oss << '[' << std::setfill('0')
+			<< std::setw(2) << tm.tm_hour << ':'
+			<< std::setw(2) << tm.tm_min  << ':'
+			<< std::setw(2) << tm.tm_sec  << '.'
+			<< std::setw(3) << ms.count() << "] "
 			<< line;
 
 		std::lock_guard lk(mu);
@@ -58,7 +58,7 @@ private:
 	mutable std::mutex mu;
 	std::deque<std::string> lines;
 	size_t version{0};
-	size_t maxLines{5000}; // ring buffer cap
+	size_t maxLines{5000};  // ring buffer cap
 };
 
 

@@ -10,13 +10,6 @@
 using namespace std;
 
 
-string toLower(string s) {
-	transform(s.begin(), s.end(), s.begin(), [](const unsigned char c) {
-		return static_cast<char>(tolower(c));
-	});
-	return s;
-}
-
 // Quoted Lua-String
 string luaQuote(const string& s) {
 	string out; out.reserve(s.size() + 2);
@@ -96,7 +89,7 @@ void GUI::start() {
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/arial.ttf", 20.0f);
-	io.FontGlobalScale = 1.0f;
+	io.FontGlobalScale = 1.2f;
 
 	ImGui::StyleColorsDark();
 
