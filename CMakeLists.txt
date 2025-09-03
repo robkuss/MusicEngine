@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.0.1)
 
-project(MusicMaker)
+project(MusicEngine)
 
 
 find_package(lua CONFIG REQUIRED)
@@ -29,6 +29,8 @@ add_subdirectory(libs/glfw-3.4 ${CMAKE_BINARY_DIR}/glfw-build)
 
 add_definitions(-D__WINDOWS_MM__)
 
+add_definitions(-DRUNTIME_OUTPUT_DIR="${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
 add_library(glad STATIC libs/glad/src/glad.c)
 target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libs/glad/include)
 
@@ -52,7 +54,8 @@ target_link_libraries(imgui PUBLIC glfw glad OpenGL::GL)
 
 
 # Add the executable target
-add_executable(MusicMaker
+add_executable(MusicEngine
+		src/MusicEngine.cpp
 		src/MusicMaker.cpp
 		src/MelodyMaker.cpp
 		src/MIDI.cpp
@@ -61,6 +64,8 @@ add_executable(MusicMaker
 		src/game/GameBridge.cpp
 		src/game/GameStateHandler.cpp
 		src/gui/GUI.cpp
+		src/gui/GUITitleScreen.cpp
+		src/gui/GUIRuleDef.cpp
 
 		test/PerformanceTesting.cpp
 
@@ -69,28 +74,28 @@ add_executable(MusicMaker
 		libs/midifile/src/MidiEventList.cpp
 		libs/midifile/src/MidiMessage.cpp
 		libs/midifile/src/Binasc.cpp
+		src/gui/GUIMusicGen.cpp
 )
 
 
 # Add /resources, /input and /lua directories
-add_custom_command(TARGET MusicMaker POST_BUILD
+add_custom_command(TARGET MusicEngine POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_directory
 		${CMAKE_CURRENT_SOURCE_DIR}/resources
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/resources
 )
-add_custom_command(TARGET MusicMaker POST_BUILD
+add_custom_command(TARGET MusicEngine POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_directory
 		${CMAKE_CURRENT_SOURCE_DIR}/input
 		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/input
 )
-
-
-target_compile_definitions(MusicMaker PRIVATE
-		LUA_RULES_SCRIPT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/lua/rules.lua"
-		LUA_LOGIC_SCRIPT_PATH="${CMAKE_CURRENT_SOURCE_DIR}/lua/logic.lua"
+add_custom_command(TARGET MusicEngine POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_directory
+		${CMAKE_CURRENT_SOURCE_DIR}/lua
+		${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/lua
 )
 
-target_include_directories(MusicMaker PRIVATE
+target_include_directories(MusicEngine PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src
 		${CMAKE_CURRENT_SOURCE_DIR}/libs/json-develop/include
 		${CMAKE_CURRENT_SOURCE_DIR}/libs/sol2/include
@@ -99,13 +104,13 @@ target_include_directories(MusicMaker PRIVATE
 		${MIDIFILE_INCLUDE_DIR}
 )
 
-target_link_directories(MusicMaker PRIVATE
+target_link_directories(MusicEngine PRIVATE
 		${FLUIDSYNTH_LIBRARY_DIR}
 		${MIDIFILE_LIB_DIR}
 )
 
 # === Link to the static or dynamic libs ===
-target_link_libraries(MusicMaker PRIVATE
+target_link_libraries(MusicEngine PRIVATE
 		fluidsynth-3
 		winmm
 		lua
@@ -115,5 +120,5 @@ target_link_libraries(MusicMaker PRIVATE
 )
 
 if(WIN32)
-	target_link_libraries(MusicMaker PRIVATE ws2_32)
+	target_link_libraries(MusicEngine PRIVATE ws2_32)
 endif()

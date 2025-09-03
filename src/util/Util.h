@@ -156,3 +156,42 @@ inline std::vector<std::string> scanMidiFiles() {
 	return files;
 }
 
+inline std::string trim(const std::string& s) {
+	const auto ws = " \t\r\n";
+	const auto a = s.find_first_not_of(ws);
+	if (a == std::string::npos) return "";
+	const auto b = s.find_last_not_of(ws);
+	return s.substr(a, b - a + 1);
+}
+
+
+inline std::string canonicalize(const std::string& uncanon) {
+	std::string s = uncanon;
+
+	// to lowercase
+	std::transform(s.begin(), s.end(), s.begin(),
+	   [](const unsigned char c) {
+		   return static_cast<char>(std::tolower(c));
+	   });
+
+	// replace spaces with underscores
+	std::replace(s.begin(), s.end(), ' ', '_');
+
+	return s;
+}
+
+inline std::string uncanonicalize(const std::string& canon) {
+	std::string s = canon;
+
+	// Replace underscores with spaces
+	for (auto& c : s) if (c == '_') c = ' ';
+
+	// Capitalize first letter of each word
+	bool cap = true;
+	for (auto& c : s) {
+		if (cap && std::isalpha(static_cast<unsigned char>(c)))
+			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+		cap = c == ' ';
+	}
+	return s;
+}

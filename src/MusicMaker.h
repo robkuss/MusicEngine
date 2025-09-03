@@ -67,6 +67,12 @@ private:
 	void pause();
 	void resume();
 
+	std::atomic<bool> stopRequested{false};
+	std::atomic<bool> isRunning{false};
+
+	void requestStop() { stopRequested.store(true, std::memory_order_relaxed); }
+	bool running() const { return isRunning.load(std::memory_order_acquire); }
+
 	void scheduleNote(Note note, Clock::time_point startTime, double duration, ActiveInstrument instrument);
 	void scheduleMelody(const std::vector<std::shared_ptr<ScheduledEvent>> &schedule);
 	void scheduleBass(const Chord& nextChord, Clock::time_point mstAbs);

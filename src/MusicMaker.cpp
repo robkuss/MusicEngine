@@ -3,22 +3,14 @@
 #include <cfloat>
 
 #include "util/Debug.h"
-#include "gui/GUI.h"
 
 using namespace std;
 using namespace smf;
-
 
 constexpr bool INIT_DEBUG = false;
 constexpr bool DEBUG_JSON = false;
 
 constexpr bool OFFLINE_MODE = false;  // Doesn't require connection to a game to generate music
-
-
-int main() {
-	GUI("Music Engine", 1500, 950).start();
-	MusicMaker().start();
-}
 
 
 void MusicMaker::start() {
@@ -205,7 +197,8 @@ void MusicMaker::play() {
 				const double localMs = chrono::duration<double, micro>(eventTime - themeStartTime).count();
 
 				double loopedMs = fmod(localMs, themeLengthMs);
-				if (loopedMs < 0.0) loopedMs += themeLengthMs;
+				if (loopedMs < 0.0)
+					loopedMs += themeLengthMs;
 
 				if (loopedMs < msOffset || loopedMs >= msOffset + tsInfo.msPerMeas)
 					return;

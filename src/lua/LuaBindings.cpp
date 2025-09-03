@@ -127,17 +127,17 @@ void MusicMaker::loadLuaFileSafe(const string& path, const char* tag) {
 }
 
 void MusicMaker::loadLuaRules() {
-	loadLuaFileSafe(LUA_RULES_SCRIPT_PATH,  "rules.lua");
+	loadLuaFileSafe("lua/rules.lua", "rules.lua");
 }
 
 void MusicMaker::loadLuaLogic() {
-	loadLuaFileSafe(LUA_LOGIC_SCRIPT_PATH,  "logic.lua");
+	loadLuaFileSafe("lua/logic.lua", "logic.lua");
 
 	onStart  = lua["on_start"];
 	onUpdate = lua["on_update"];
 
-	if (!onStart)  cerr << "[Lua] Warning: Required Lua on_start function missing or invalid\n";
-	if (!onUpdate) cerr << "[Lua] Warning: Required Lua on_update function missing or invalid\n";
+	if (!onStart)  std::cerr << "[Lua] Warning: Required Lua on_start function missing or invalid\n";
+	if (!onUpdate) std::cerr << "[Lua] Warning: Required Lua on_update function missing or invalid\n";
 }
 
 void MusicMaker::validateAllRules() {
