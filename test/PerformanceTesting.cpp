@@ -1,4 +1,3 @@
-/*
 #include "../src/MusicMaker.h"
 
 #include "RandomLuaRules.h"
@@ -17,15 +16,15 @@ long long autoMs;
 Clock::time_point t_start;
 
 
-int main() {
-	constexpr int iterations = 10;
-	const vector lengths	 = {2, 5, 10, 25, 100};  // in measures
+/*int main() {
+	constexpr int iterations = 20;
+	const vector lengths	 = {1, 2, 5, 10, 15, 25, 50, 100};  // in measures
 
 	for (const int length : lengths) {
 		for (int i = 0; i < iterations; i++) {
 			createRandomMIDISequencesFor(lengths);
 
-			const std::string file = std::format("{}.mid", length);
+			const string file = format("{}.mid", length);
 			cout << file << endl;
 
 			// createRandomLuaRules(1, file, true);
@@ -35,10 +34,10 @@ int main() {
 			MusicMaker().startPT(file);
 		}
 	}
-}
+}*/
 
 
-void MusicMaker::startPT(const std::string& file) {
+void MusicMaker::startPT(const string& file) {
 	preloadMIDIFile(file);
 
 	// Get input training MIDI
@@ -79,4 +78,3 @@ void MusicMaker::startPT(const std::string& file) {
 
 	logPerformanceCSV("perf_results.csv", autoMs, melody.events.size());
 }
-*/

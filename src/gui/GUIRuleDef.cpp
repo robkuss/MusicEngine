@@ -12,9 +12,23 @@ using namespace std;
 
 void GUI::ruleDef() {
     ImGui::Text("Game:");
-    const GameData games[] = {Minecraft};
+    const GameData games[] = {Minecraft, DummyGame};
     static int gameIdx = 0;
-    ImGui::Combo("##GameCombo", &gameIdx, games->name, IM_ARRAYSIZE(games));
+
+	auto items_getter = [](void* data, const int idx, const char** out_text) -> bool {
+		const auto g = static_cast<const GameData*>(data);
+		*out_text = g[idx].name;
+		return true;
+	};
+
+	ImGui::Combo(
+		"##GameCombo",
+		&gameIdx,
+		items_getter,
+		(void*)games,
+		IM_ARRAYSIZE(games)
+	);
+
     selectedGame = games[gameIdx];
 
 	ImGui::Dummy(ImVec2(0, 8));

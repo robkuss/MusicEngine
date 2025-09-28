@@ -42,6 +42,8 @@ public:
 	void requestStop() { stopRequested.store(true, std::memory_order_relaxed); }
 	bool running() const { return isRunning.load(std::memory_order_acquire); }
 
+	void startPT(const std::string &file);  // For performance testing
+
 private:
 	// FUNCTIONS
 	// Lua

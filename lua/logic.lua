@@ -1,5 +1,20 @@
 -- logic.lua
 
+-- Helpers
+local function has(list, value)
+    for _, v in ipairs(list) do if v == value then return true end end
+    return false
+end
+
+local function first_non_nil(...)
+    for i = 1, select("#", ...) do
+        local v = select(i, ...)
+        if v ~= nil then return v end
+    end
+    return nil
+end
+
+
 -- Called once at the start of the execution
 function on_start()
     -- Preload all MIDI files defined in rules
@@ -13,6 +28,7 @@ function on_start()
         end
     end
 end
+
 
 -- Track which trigger types were active in the previous update
 local previous_triggers = {}
@@ -36,7 +52,23 @@ function on_update(game_state)
     end
 
     -- Set current environment
-    current_triggers[game_state.environment] = true or {}
+    local env_type = game_state.environment
+    local env_tags = {}
+
+    if type(game_state.environmentTags) == "table" then
+        for _, t in ipairs(game_state.environmentTags) do
+            if type(t) == "string" and t ~= "" then
+                table.insert(env_tags, t)
+            end
+        end
+    end
+
+    if type(env_type) == "string" and env_type ~= "" then
+        current_triggers[env_type] = true
+    end
+    for _, tag in ipairs(env_tags) do
+        current_triggers[tag] = true
+    end
 
 
     -- === MIDI REMOVAL (for triggers that are no longer active) ===
@@ -75,7 +107,14 @@ end
 function apply_effects(game_state)
     local player_health = game_state.playerHealth
     local enemies       = game_state.enemies
-    local environment   = game_state.environment
+    local env_type      = game_state.environment
+    local env_tags      = {}
+
+    if type(game_state.environmentTags) == "table" then
+        for _, t in ipairs(game_state.environmentTags) do
+            if type(t) == "string" and t ~= "" then table.insert(env_tags, t) end
+        end
+    end
 
     local closest_enemy_rules = {}
     local closest_dist = {}
@@ -94,18 +133,30 @@ function apply_effects(game_state)
         end
     end
 
-    -- Fall back to environment rule where no enemy overrides
-    local env_rule = rules[environment] or {}
+    -- Environment rule
+    local env_rule = {}
 
+    local tag_priority = { "thunder", "snow", "rain", "night", "clear", "day" }
+    for _, tag in ipairs(tag_priority) do
+        if has(env_tags, tag) and rules[tag] then
+            env_rule = rules[tag]
+            break
+        end
+    end
+    if next(env_rule) == nil and type(env_type) == "string" and rules[env_type] then
+        env_rule = rules[env_type]
+    end
+
+    -- Unified music configuration
     local final_fx = {
-        intensity        = closest_enemy_rules.intensity        or env_rule.intensity        or 0.0,
-        scale            = closest_enemy_rules.scale            or env_rule.scale            or "Ionian",
-        tempo_multiplier = closest_enemy_rules.tempo_multiplier or env_rule.tempo_multiplier or 1.0,
-        lead_style       = closest_enemy_rules.lead_style       or env_rule.lead_style       or "Sustain",
-        lead_layers      = closest_enemy_rules.lead_layers      or env_rule.lead_layers      or 1,
-        chord_layers     = closest_enemy_rules.chord_layers     or env_rule.chord_layers     or 1,
-        bass_style       = closest_enemy_rules.bass_style       or env_rule.bass_style       or "Sustain",
-        drum_pattern     = closest_enemy_rules.drum_pattern     or env_rule.drum_pattern     or "None",
+        intensity        = first_non_nil(closest_enemy_rules.intensity,        env_rule.intensity,        0.0),
+        scale            = first_non_nil(closest_enemy_rules.scale,            env_rule.scale,            "Ionian"),
+        tempo_multiplier = first_non_nil(closest_enemy_rules.tempo_multiplier, env_rule.tempo_multiplier, 1.0),
+        lead_style       = first_non_nil(closest_enemy_rules.lead_style,       env_rule.lead_style,       "Sustain"),
+        lead_layers      = first_non_nil(closest_enemy_rules.lead_layers,      env_rule.lead_layers,      1),
+        chord_layers     = first_non_nil(closest_enemy_rules.chord_layers,     env_rule.chord_layers,     1),
+        bass_style       = first_non_nil(closest_enemy_rules.bass_style,       env_rule.bass_style,       "Sustain"),
+        drum_pattern     = first_non_nil(closest_enemy_rules.drum_pattern,     env_rule.drum_pattern,     "None"),
     }
 
     -- Apply effects

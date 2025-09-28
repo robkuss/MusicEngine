@@ -1,10 +1,11 @@
 #include "MusicMaker.h"
 
 using namespace std;
+using namespace sol;
 
 
 void MusicMaker::startGameStateThread() {
-	thread([this] {
+	std::thread([this] {
 		while (!stopReceiver.load() && gb.isClientConnected()) {
 			string payload = gb.receiveJsonPayload();
 			if (payload.empty()) {
@@ -24,7 +25,7 @@ void MusicMaker::startGameStateThread() {
 				nlohmann::json parsed = nlohmann::json::parse(payload);
 
 				// Convert to Lua table
-				sol::table gameState = lua.create_table();
+				table gameState = lua.create_table();
 
 				handleGameState(parsed, gameState);
 
@@ -39,7 +40,7 @@ void MusicMaker::startGameStateThread() {
 }
 
 
-void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) {
+void MusicMaker::handleGameState(nlohmann::json& parsed, table& gameState) {
     using nlohmann::json;
 
     auto get_number = [&](const json& j, const char* key, double& out)->bool {
@@ -69,7 +70,7 @@ void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) 
 
     // enemies
 	{
-    	sol::table enemies = lua.create_table();
+    	table enemies = lua.create_table();
     	size_t written = 0;
 
     	if (parsed.contains("enemies") && parsed["enemies"].is_array()) {
@@ -83,7 +84,7 @@ void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) 
     			type = enemy["type"].get<string>();
     			if (type.empty()) continue;
 
-    			sol::table e = lua.create_table();
+    			table e = lua.create_table();
     			e["type"] = type;
     			if (enemy.contains("distance") && enemy["distance"].is_number()) {
     				double d = enemy["distance"].get<double>();
@@ -104,13 +105,34 @@ void MusicMaker::handleGameState(nlohmann::json& parsed, sol::table& gameState) 
 
     // environment
 	{
-    	string env;
-    	if (parsed.contains("environment") && parsed["environment"].is_string()) {
-    		env = parsed["environment"].get<string>();
-    	} else {
-    		env.clear();
+    	string envStr;
+    	table tagsTbl = lua.create_table();
+
+    	if (parsed.contains("environment")) {
+    		const auto& env = parsed["environment"];
+
+    		if (env.is_object()) {
+    			// Prefer object shape: { type: string, tags: string[] }
+    			if (env.contains("type") && env["type"].is_string()) {
+    				envStr = env["type"].get<string>();
+    			}
+    			if (env.contains("tags") && env["tags"].is_array()) {
+    				size_t i = 0;
+    				for (const auto& t : env["tags"]) {
+    					if (t.is_string()) {
+    						tagsTbl[++i] = t.get<string>();
+    					}
+    				}
+    			}
+    		} else if (env.is_string()) {
+    			// Old shape: environment was a single string
+    			envStr = env.get<string>();
+    		} else {
+    			cerr << "[MusicMaker] JSON: environment wrong type -> default empty\n";
+    		}
     	}
 
-    	gameState["environment"] = env;
+    	gameState["environment"]     = envStr;
+    	gameState["environmentTags"] = tagsTbl;
 	}
 }

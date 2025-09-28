@@ -27,7 +27,7 @@ using namespace std;
 // Globals
 constexpr u_short PORT = 5555;
 
-constexpr bool DEBUG_GB = false;
+constexpr bool DEBUG_GB = true;
 
 
 GameBridge::GameBridge() = default;

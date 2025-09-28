@@ -174,3 +174,14 @@ static GameData Minecraft{"Minecraft",
 	"snow",
 	"thunderstorm"
 }};
+
+
+static GameData DummyGame {"Dummy Game",
+{
+	"goblin",
+	"zombie",
+	"dragon"
+},
+{"level_1"},
+{}
+};
